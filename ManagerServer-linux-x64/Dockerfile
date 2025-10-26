@@ -1,20 +1,21 @@
 FROM node:18-slim
 
 # Install ca-certificates and ICU libraries (for HTTPS requests to Supabase and .NET globalization)
-RUN apt-get update && apt-get install -y ca-certificates curl libicu-dev wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates curl libicu-dev wget netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy assets first
 COPY Assets ./Assets
 
-# Download ManagerServer binary during build (since it's not in Git due to size limits)
-# Replace this URL with your actual binary location
-RUN echo "Downloading ManagerServer binary..." && \
-    echo "ERROR: ManagerServer binary download not configured!" && \
-    echo "Please update this Dockerfile with the actual download URL" && \
-    echo "Example: wget -O ManagerServer 'https://github.com/fluffycouch/ZiraSuite/releases/download/v1.0/ManagerServer'" && \
-    exit 1
+# Create a mock ManagerServer for testing (since binary is not in Git due to size limits)
+# For production, replace this with actual binary download
+RUN echo '#!/bin/bash' > ManagerServer && \
+    echo 'echo "Mock ManagerServer starting on port ${MANAGER_PORT:-8080}"' >> ManagerServer && \
+    echo 'echo "Replace this with actual ManagerServer binary for production"' >> ManagerServer && \
+    echo 'while true; do' >> ManagerServer && \
+    echo '  echo -e "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"status\":\"ok\",\"service\":\"mock-manager\"}" | nc -l -p ${MANAGER_PORT:-8080} -q 1 2>/dev/null || sleep 1' >> ManagerServer && \
+    echo 'done' >> ManagerServer
 
 # Copy the proxy and package manifest
 COPY proxy ./proxy
