@@ -5,32 +5,26 @@ set -e
 MANAGER_PORT=${MANAGER_PORT:-8080}
 PROXY_PORT=${PORT:-3000}
 
+echo "Starting Zira Suite deployment..."
+echo "ManagerServer port: ${MANAGER_PORT}"
+echo "Proxy port: ${PROXY_PORT}"
+
 # Start ManagerServer in background
 echo "Starting ManagerServer on port ${MANAGER_PORT}..."
-./ManagerServer --urls "http://*:${MANAGER_PORT}" &
+./ManagerServer &
 MANAGER_PID=$!
 
-# Readiness loop: wait until ManagerServer responds on /health or until timeout
-HEALTH_PATH=${HEALTH_PATH:-/health}
-TIMEOUT=${READY_TIMEOUT:-30} # seconds
-INTERVAL=1
-elapsed=0
-echo "Waiting up to ${TIMEOUT}s for ManagerServer to become ready (checking ${HEALTH_PATH})..."
-while [ ${elapsed} -lt ${TIMEOUT} ]; do
-	if curl -s -f "http://127.0.0.1:${MANAGER_PORT}${HEALTH_PATH}" > /dev/null 2>&1; then
-		echo "ManagerServer is healthy"
-		break
-	fi
-	sleep ${INTERVAL}
-	elapsed=$((elapsed + INTERVAL))
-done
+# Give ManagerServer a moment to start
+sleep 2
 
-if [ ${elapsed} -ge ${TIMEOUT} ]; then
-	echo "Warning: ManagerServer did not become healthy within ${TIMEOUT}s. Proceeding to start proxy anyway."
+# Simple health check - just verify the process is running
+echo "Checking if ManagerServer is running..."
+if kill -0 $MANAGER_PID 2>/dev/null; then
+    echo "ManagerServer is running (PID: $MANAGER_PID)"
+else
+    echo "Warning: ManagerServer may not have started properly"
 fi
 
+# Start the auth proxy
 echo "Starting auth proxy on port ${PROXY_PORT}..."
-node proxy/index.js
-
-# wait for ManagerServer if it exits
-wait ${MANAGER_PID}
+exec node proxy/index.js
