@@ -1,0 +1,16 @@
+{
+  "name": "managerserver-auth-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "main": "proxy/index.js",
+  "scripts": {
+    "start": "node proxy/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
+    "node-fetch": "^2.6.7",
+    "jsonwebtoken": "^8.5.1",
+    "jwks-rsa": "^2.0.5"
+  }
+}

@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  manager:
+    build: .
+    ports:
+      - "80:3000" # Expose the proxy on host port 80 (adjust as needed)
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - MANAGER_PORT=8080
+    volumes:
+      - manager_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  manager_data:
+    driver: local
