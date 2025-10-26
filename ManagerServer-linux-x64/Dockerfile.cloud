@@ -1,0 +1,49 @@
+# Multi-stage Dockerfile for cloud deployment without large binaries in Git
+FROM node:18-slim as base
+
+# Install dependencies
+RUN apt-get update && apt-get install -y ca-certificates curl libicu-dev wget && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package files and install Node.js dependencies
+COPY package.json ./package.json
+RUN npm ci --only=production || npm install --only=production
+
+# Copy application files (excluding large binaries)
+COPY Assets ./Assets
+COPY proxy ./proxy
+COPY entrypoint.sh ./entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x ./entrypoint.sh
+
+# Production stage
+FROM base as production
+
+# Copy or download ManagerServer binary
+# Option 1: Copy if available locally
+COPY ManagerServer ./ManagerServer 2>/dev/null || true
+
+# Option 2: Download from a URL (uncomment and modify as needed)
+# RUN wget -O ManagerServer "https://your-server.com/releases/ManagerServer" && chmod +x ManagerServer
+
+# Option 3: Build from source (if you have source code)
+# COPY src ./src
+# RUN dotnet publish -c Release -o . src/ManagerServer.csproj
+
+# Verify ManagerServer exists and is executable
+RUN if [ ! -f "./ManagerServer" ]; then \
+        echo "ERROR: ManagerServer binary not found!"; \
+        echo "Please either:"; \
+        echo "1. Place ManagerServer binary in the build context"; \
+        echo "2. Uncomment the wget line and provide download URL"; \
+        echo "3. Provide source code for building"; \
+        exit 1; \
+    fi && \
+    chmod +x ./ManagerServer
+
+ENV PORT=3000
+EXPOSE 3000
+
+CMD ["./entrypoint.sh"]

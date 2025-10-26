@@ -86,5 +86,9 @@ temp/
 dist/
 build/
 
+# Large binaries (over GitHub 100MB limit)
+ManagerServer-linux-x64/ManagerServer
+ManagerServer-linux-x64/.playwright/node/linux-x64/node
+
 # Local development
 .local/
