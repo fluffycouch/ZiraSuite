@@ -8,8 +8,13 @@ WORKDIR /app
 # Copy assets first
 COPY Assets ./Assets
 
-# Copy ManagerServer binary (if it exists locally, otherwise download during build)
-COPY ManagerServer ./ManagerServer 2>/dev/null || echo "ManagerServer binary not found - you may need to provide it separately"
+# Download ManagerServer binary during build (since it's not in Git due to size limits)
+# Replace this URL with your actual binary location
+RUN echo "Downloading ManagerServer binary..." && \
+    echo "ERROR: ManagerServer binary download not configured!" && \
+    echo "Please update this Dockerfile with the actual download URL" && \
+    echo "Example: wget -O ManagerServer 'https://github.com/fluffycouch/ZiraSuite/releases/download/v1.0/ManagerServer'" && \
+    exit 1
 
 # Copy the proxy and package manifest
 COPY proxy ./proxy

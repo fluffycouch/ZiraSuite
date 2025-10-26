@@ -1,0 +1,36 @@
+# Dockerfile for proxy-only deployment (for testing without ManagerServer binary)
+FROM node:18-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy proxy files
+COPY proxy ./proxy
+COPY package.json ./package.json
+
+# Install Node.js dependencies
+RUN npm ci --only=production || npm install --only=production
+
+# Create a simple mock ManagerServer for testing
+RUN echo '#!/bin/bash' > mock-manager.sh && \
+    echo 'echo "Mock ManagerServer starting on port ${MANAGER_PORT:-8080}"' >> mock-manager.sh && \
+    echo 'while true; do' >> mock-manager.sh && \
+    echo '  echo "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"status\":\"ok\",\"message\":\"Mock ManagerServer\"}" | nc -l -p ${MANAGER_PORT:-8080} -q 1' >> mock-manager.sh && \
+    echo 'done' >> mock-manager.sh && \
+    chmod +x mock-manager.sh
+
+# Create simple entrypoint
+RUN echo '#!/bin/bash' > entrypoint.sh && \
+    echo 'echo "Starting Mock ManagerServer..."' >> entrypoint.sh && \
+    echo './mock-manager.sh &' >> entrypoint.sh && \
+    echo 'sleep 2' >> entrypoint.sh && \
+    echo 'echo "Starting auth proxy..."' >> entrypoint.sh && \
+    echo 'node proxy/index.js' >> entrypoint.sh && \
+    chmod +x entrypoint.sh
+
+ENV PORT=3000
+EXPOSE 3000
+
+CMD ["./entrypoint.sh"]

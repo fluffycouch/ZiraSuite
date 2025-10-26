@@ -3,9 +3,26 @@
 ## The Problem
 GitHub has a 100MB file size limit, but our ManagerServer binary (116MB) and Node.js binary (116MB) exceed this limit.
 
-## Solutions
+## Free Deployment Solutions
 
-### Option 1: Use Cloud Build with Binary Download (Recommended)
+### Option 1: Test with Proxy-Only Version (Quickest)
+
+For immediate testing without the ManagerServer binary:
+
+```bash
+# Deploy proxy-only version to test authentication
+# Uses Dockerfile.proxy-only with a mock backend
+```
+
+**Render Setup:**
+1. Connect GitHub repository
+2. Set root directory: `ManagerServer-linux-x64`
+3. Set Docker file: `Dockerfile.proxy-only`
+4. Add environment variables:
+   - `SUPABASE_URL`: `https://jowjuudrfgejczwotvws.supabase.co`
+   - `SUPABASE_ANON_KEY`: `your_anon_key`
+
+### Option 2: Use Cloud Build with Binary Download
 
 Use `Dockerfile.cloud` which downloads binaries during the build process:
 
